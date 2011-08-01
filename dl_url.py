@@ -48,10 +48,10 @@ if not os.path.exists(hash_dir):
 
 def fetch_url(url, to_file_name):
     import urllib2
-    with urllib2.urlopen(url) as resp:
-        with open(os.path.join(cwd, to_file_name), "w+") as out:
-            for line in resp:
-                out.write(line)
+    resp = urllib2.urlopen(url)
+    with open(os.path.join(cwd, to_file_name), "w+") as out:
+        for line in resp:
+            out.write(line)
 
 def store_meta(for_url, to_file,  data={}):
     data['url'] = for_url
@@ -66,9 +66,24 @@ def store_hash(for_url):
     with open(hash_path, "w+") as file:
         pass
 
+def create_file_name_no_collisions(full_file_path):
+    original_file_path = full_file_path
+    counter = 1
+    # we will only make a change if the file already exists
+    while os.path.exists(full_file_path):
+        d, f = os.path.split(original_file_path)
+	full_file_path = os.path.join(d, "%s_%s" % (str(counter), f))
+        counter += 1
+    return full_file_path, os.path.basename(full_file_path)   
+    
+
 for url in args.urls:
     file_name = os.path.basename(urlparse.urlparse(url)[2])
+    # make sure that we've not accidentally gotten a 
+    # reference to our self here
     if not file_name == os.path.basename(__file__):
+        file_path, file_name = create_file_name_no_collisions( \
+            os.path.join(cwd, file_name))
         fetch_url(url, file_name)
         store_meta(url, file_name, {})
         store_hash(url)
