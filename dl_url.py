@@ -41,22 +41,36 @@ cwd = os.getcwd()
 hash_dir = os.path.join(cwd, HASH_DIR)
 meta_dir = os.path.join(cwd, META_DIR)
 
-def fetch_url(url, to_file_name):
-    print("url: %s" % (url))
-    print("file name: %s " % (file_name))
+if not os.path.exists(meta_dir):
+    os.makedirs(meta_dir)
+if not os.path.exists(hash_dir):
+    os.makedirs(hash_dir)
 
-def store_meta(for_url, data={}):
+def fetch_url(url, to_file_name):
+    import urllib2
+    with urllib2.urlopen(url) as resp:
+        with open(os.path.join(cwd, to_file_name), "w+") as out:
+            for line in resp:
+                out.write(line)
+
+def store_meta(for_url, to_file,  data={}):
     data['url'] = for_url
-    print json.dumps(data)
+    with open(os.path.join(meta_dir, to_file), "w+") as file:
+        json.dump(data, file)
 
 def store_hash(for_url):
-    print("hash: %s " % (get_hash(url)))
+    hash = get_hash(url)
+    hash_path = os.path.join(hash_dir, hash)
+    if os.path.exists(hash_path):
+        raise Exception("url already downloaded")
+    with open(hash_path, "w+") as file:
+        pass
 
 for url in args.urls:
     file_name = os.path.basename(urlparse.urlparse(url)[2])
     if not file_name == os.path.basename(__file__):
         fetch_url(url, file_name)
-        store_meta(url, {})
+        store_meta(url, file_name, {})
         store_hash(url)
 
 
