@@ -32,11 +32,6 @@ def get_hash(for_this):
     h.update(for_this)
     return h.hexdigest()
 
-parser = argparse.ArgumentParser(description='downloads the url')
-parser.add_argument('urls', nargs='+',
-                   help='urls to be fetched')
-args = parser.parse_args(sys.argv)
-
 cwd = os.getcwd()
 hash_dir = os.path.join(cwd, HASH_DIR)
 meta_dir = os.path.join(cwd, META_DIR)
@@ -59,7 +54,7 @@ def store_meta(for_url, to_file,  data={}):
         json.dump(data, file)
 
 def store_hash(for_url):
-    hash = get_hash(url)
+    hash = get_hash(for_url)
     hash_path = os.path.join(hash_dir, hash)
     if os.path.exists(hash_path):
         raise Exception("url already downloaded")
@@ -82,15 +77,23 @@ def file_name_for_url(url):
         file_name = url.replace(":","").replace("/","").replace("http","")
     return file_name
 
-for url in args.urls:
-    file_name = file_name_for_url(url)
-    # make sure that we've not accidentally gotten a 
-    # reference to our self here
-    if not file_name == os.path.basename(__file__):
-        file_path, file_name = create_file_name_no_collisions( \
-            os.path.join(cwd, file_name))
-        fetch_url(url, file_name)
-        store_meta(url, file_name, {})
-        store_hash(url)
+def download_urls(urls):	
+    for url in urls:
+        file_name = file_name_for_url(url)
+        # make sure that we've not accidentally gotten a 
+        # reference to our self here
+        if not file_name == os.path.basename(__file__):
+            file_path, file_name = create_file_name_no_collisions( \
+                os.path.join(cwd, file_name))
+            fetch_url(url, file_name)
+            store_meta(url, file_name, {})
+            store_hash(url)
 
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='downloads the url')
+    parser.add_argument('urls', nargs='+',
+                   help='urls to be fetched')
+    args = parser.parse_args(sys.argv)
+    download_urls(args.urls)
 
+    
