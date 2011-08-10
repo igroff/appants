@@ -32,30 +32,21 @@ def get_hash(for_this):
     h.update(for_this)
     return h.hexdigest()
 
-cwd = os.getcwd()
-hash_dir = os.path.join(cwd, HASH_DIR)
-meta_dir = os.path.join(cwd, META_DIR)
-
-if not os.path.exists(meta_dir):
-    os.makedirs(meta_dir)
-if not os.path.exists(hash_dir):
-    os.makedirs(hash_dir)
-
-def fetch_url(url, to_file_name):
+def fetch_url(url, to_file):
     import urllib2
     resp = urllib2.urlopen(url)
-    with open(os.path.join(cwd, to_file_name), "w+") as out:
+    with open(to_file, "w+") as out:
         for line in resp:
             out.write(line)
 
 def store_meta(for_url, to_file,  data={}):
     data['url'] = for_url
-    with open(os.path.join(meta_dir, to_file), "w+") as file:
+    with open(to_file, "w+") as file:
         json.dump(data, file)
 
-def store_hash(for_url):
+def store_hash(for_url, dir):
     hash = get_hash(for_url)
-    hash_path = os.path.join(hash_dir, hash)
+    hash_path = os.path.join(dir, hash)
     if os.path.exists(hash_path):
         raise Exception("url already downloaded")
     with open(hash_path, "w+") as file:
@@ -77,7 +68,17 @@ def file_name_for_url(url):
         file_name = url.replace(":","").replace("/","").replace("http","")
     return file_name
 
-def download_urls(urls):	
+def download_urls(urls, dir=os.getcwd()):	
+    cwd = dir
+    hash_dir = os.path.join(cwd, HASH_DIR)
+    meta_dir = os.path.join(cwd, META_DIR)
+
+    if not os.path.exists(meta_dir):
+        os.makedirs(meta_dir)
+    if not os.path.exists(hash_dir):
+        os.makedirs(hash_dir)
+
+
     for url in urls:
         file_name = file_name_for_url(url)
         # make sure that we've not accidentally gotten a 
@@ -85,9 +86,9 @@ def download_urls(urls):
         if not file_name == os.path.basename(__file__):
             file_path, file_name = create_file_name_no_collisions( \
                 os.path.join(cwd, file_name))
-            fetch_url(url, file_name)
-            store_meta(url, file_name, {})
-            store_hash(url)
+            fetch_url(url, os.path.join(cwd, file_name))
+            store_meta(url, os.path.join(meta_dir, file_name), {})
+            store_hash(url, hash_dir)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='downloads the url')
