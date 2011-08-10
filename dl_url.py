@@ -76,9 +76,14 @@ def create_file_name_no_collisions(full_file_path):
         counter += 1
     return full_file_path, os.path.basename(full_file_path)   
     
+def file_name_for_url(url):
+    file_name = os.path.basename(urlparse.urlparse(url)[2])
+    if not file_name:
+        file_name = url.replace(":","").replace("/","").replace("http","")
+    return file_name
 
 for url in args.urls:
-    file_name = os.path.basename(urlparse.urlparse(url)[2])
+    file_name = file_name_for_url(url)
     # make sure that we've not accidentally gotten a 
     # reference to our self here
     if not file_name == os.path.basename(__file__):
